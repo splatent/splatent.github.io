@@ -1,0 +1,2546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workplan Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: #f6f8fa;
+            color: #333;
+        }
+
+        .navbar {
+            background-color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-left h1 {
+            font-size: 20px;
+            color: #1a1a1a;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-right button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .navbar-right button:hover {
+            background-color: #0056b3;
+        }
+
+        .sidebar {
+            background-color: #fff;
+            width: 200px;
+            height: calc(100vh - 60px);
+            position: fixed;
+            top: 60px;
+            left: 0;
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            padding: 10px 0;
+            font-size: 16px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .sidebar ul li.active {
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .summary-cards {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card.clickable {
+            cursor: pointer;
+        }
+
+        .card.clickable:hover {
+            background-color: #f0f0f0;
+        }
+
+        .card i {
+            font-size: 24px;
+        }
+
+        .card .icon-projects { color: #007bff; }
+        .card .icon-completed { color: #28a745; }
+        .card .icon-deadlines { color: #ff9500; }
+
+        .card-content h3 {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .card-content p {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .charts {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex: 1;
+        }
+
+        .chart-container h2 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .task-table, .gantt-container, .projects-container, .team-container, .resources-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .table-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filters select, .filters input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 500;
+            color: #666;
+            font-size: 14px;
+        }
+
+        th.sortable {
+            cursor: pointer;
+        }
+
+        th.sortable:hover {
+            background-color: #e9ecef;
+        }
+
+        th.sortable .fa-sort-up,
+        th.sortable .fa-sort-down {
+            color: #007bff;
+        }
+
+        td {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .task-row, .project-row, .resource-row {
+            position: relative;
+        }
+
+        .task-row.subtask {
+            padding-left: 20px;
+        }
+
+        .task-row.subtask td:first-child::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #ddd;
+        }
+
+        .task-row.subtask td:first-child::after {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            width: 10px;
+            height: 2px;
+            background-color: #ddd;
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-not-started { background-color: #e9ecef; color: #666; }
+        .status-in-progress { background-color: #007bff; color: white; }
+        .status-completed { background-color: #28a745; color: white; }
+        .status-delayed { background-color: #dc3545; color: white; }
+
+        .actions button {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .actions button:hover {
+            color: #0056b3;
+        }
+
+        .gantt-container {
+            position: relative;
+        }
+
+        .gantt-controls {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .gantt-controls button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .gantt-controls button:hover {
+            background-color: #0056b3;
+        }
+
+        .gantt-timeline {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            height: 80px;
+        }
+
+        .gantt-month, .gantt-day, .gantt-week {
+            border-right: 1px solid #ddd;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .gantt-month {
+            padding: 5px 0;
+        }
+
+        .gantt-day {
+            padding: 2px 0;
+            font-size: 10px;
+        }
+
+        .gantt-week {
+            padding: 2px 0;
+            font-size: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .gantt-chart {
+            position: relative;
+            height: 600px;
+            overflow-x: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .gantt-task {
+            position: absolute;
+            height: 20px;
+            border-radius: 4px;
+            color: white;
+            padding: 2px 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .gantt-task:hover {
+            opacity: 0.8;
+        }
+
+        .gantt-task.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+        }
+
+        .today-line {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background-color: #ff0000;
+            z-index: 1;
+        }
+
+        .projects-container table, .team-container table, .resources-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .project-row, .task-row, .resource-row {
+            cursor: pointer;
+        }
+
+        .project-row {
+            background-color: #e6f0fa; /* Pale blue background for project rows */
+        }
+
+        .project-row td:first-child {
+            font-weight: bold; /* Bold font for project names */
+        }
+
+        .project-row:hover, .task-row:hover, .resource-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .project-row.draggable {
+            cursor: move;
+        }
+
+        .project-row.dragging {
+            opacity: 0.5;
+        }
+
+        .expandable::before {
+            content: '\f0da';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            margin-right: 5px;
+            color: #666;
+        }
+
+        .expandable.expanded::before {
+            content: '\f0d7';
+        }
+
+        .project-tasks, .subtask {
+            display: none;
+        }
+
+        .project-tasks.expanded, .subtask.expanded {
+            display: table-row;
+        }
+
+        .team-member {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .team-member:last-child {
+            border-bottom: none;
+        }
+
+        .profile-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .profile-card img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #ddd;
+        }
+
+        .profile-details h3 {
+            font-size: 16px;
+            color: #333;
+        }
+
+        .profile-details p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .assigned-tasks h4 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .modal-content label {
+            display: block;
+            margin: 10px 0 5px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .modal-content input,
+        .modal-content select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .modal-content .multi-select {
+            height: 100px;
+            overflow-y: auto;
+        }
+
+        .modal-content button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .modal-content button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .modal-content button[type="button"] {
+            background-color: #e9ecef;
+            color: #333;
+        }
+
+        .editable:hover {
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        .filter-row th {
+            padding: 5px;
+        }
+
+        .filter-row input, .filter-row select {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .gantt-task {
+            position: relative;
+        }
+        
+        .resize-handle-left, .resize-handle-right {
+            position: absolute;
+            width: 8px;
+            height: 100%;
+            top: 0;
+            background-color: rgba(0, 0, 0, 0.2);
+            cursor: ew-resize;
+        }
+        
+        .resize-handle-left {
+            left: 0;
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .resize-handle-right {
+            right: 0;
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .resize-handle-left:hover, .resize-handle-right:hover {
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .sorting-options {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .sorting-options label {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        
+        .sorting-options input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        .add-task-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        .add-task-btn:hover {
+            background-color: #218838;
+        }
+
+        .icon-overdue {
+            background-color: #ffebee;
+            color: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+                padding: 10px;
+            }
+
+            .sidebar ul li {
+                font-size: 12px;
+                text-align: center;
+            }
+
+            .main-content {
+                margin-left: 80px;
+                padding: 10px;
+            }
+
+            .summary-cards, .charts {
+                flex-direction: column;
+            }
+
+            .card, .chart-container {
+                width: 100%;
+            }
+
+            .filters {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .gantt-timeline {
+                font-size: 10px;
+            }
+
+            .gantt-month, .gantt-day, .gantt-week {
+                font-size: 8px;
+            }
+
+            .profile-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-left">
+            <h1>Workplan Manager</h1>
+        </div>
+        <div class="navbar-right">
+            <span>Welcome, User</span>
+            <button>Settings</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <ul>
+            <li data-tab="dashboard" class="active">Dashboard</li>
+            <li data-tab="projects">Projects</li>
+            <li data-tab="tasks">Tasks</li>
+            <li data-tab="gantt">Gantt Chart</li>
+            <li data-tab="team">Team</li>
+            <li data-tab="resources">Resources</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div id="dashboard" class="tab-content active">
+            <div class="table-header">
+                <h2>Dashboard</h2>
+                <div class="filters">
+                    <select id="dashboardResourceFilter" onchange="renderDashboard()">
+                        <option value="">All Resources</option>
+                    </select>
+                </div>
+            </div>
+            <div class="summary-cards">
+                <div class="card">
+                    <i class="fas fa-folder icon-projects"></i>
+                    <div class="card-content">
+                        <h3>Total Projects</h3>
+                        <p id="totalProjects">0</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <i class="fas fa-check-circle icon-completed"></i>
+                    <div class="card-content">
+                        <h3>Completed Tasks</h3>
+                        <p id="completedTasks">0%</p>
+                    </div>
+                </div>
+                <div class="card clickable" id="upcomingDeadlinesCard">
+                    <i class="fas fa-clock icon-deadlines"></i>
+                    <div class="card-content">
+                        <h3>Upcoming Deadlines</h3>
+                        <p id="upcomingDeadlines">0 <span style="font-size: 14px; font-weight: normal;">Next 30 days</span></p>
+                    </div>
+                </div>
+                <div class="card clickable" id="overdueTasksCard">
+                    <i class="fas fa-exclamation-circle icon-overdue"></i>
+                    <div class="card-content">
+                        <h3>Overdue Tasks</h3>
+                        <p id="overdueTasks">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="charts">
+                <div class="chart-container">
+                    <h2>Task Status</h2>
+                    <canvas id="statusChart" width="200" height="200"></canvas>
+                    <div id="statusChartLegend" class="chart-legend"></div>
+                </div>
+                <div class="chart-container">
+                    <h2>Tasks by Resource</h2>
+                    <canvas id="resourceChart" width="300" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="projects" class="tab-content">
+            <div class="projects-container">
+                <div class="table-header">
+                    <h2>Projects</h2>
+                    <button onclick="addProject()" style="background-color: #007bff; color: white; padding: 8px 16px; border-radius: 4px;">Add Project</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Total Tasks</th>
+                            <th>Completed Tasks</th>
+                            <th>Progress</th>
+                            <th>Actions</th>
+                        </tr>
+                        <tr class="filter-row">
+                            <th><input type="text" id="projectNameFilter" placeholder="Filter" oninput="renderProjects()"></th>
+                            <th><input type="text" id="totalTasksFilter" placeholder="Filter" oninput="renderProjects()"></th>
+                            <th><input type="text" id="completedTasksFilter" placeholder="Filter" oninput="renderProjects()"></th>
+                            <th><input type="text" id="progressFilter" placeholder="Filter" oninput="renderProjects()"></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectsTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tasks" class="tab-content">
+            <div class="task-table">
+                <div class="table-header">
+                    <h2>Recent Tasks</h2>
+                    <div class="filters">
+                        <button onclick="addTask()" style="background-color: #007bff; color: white; padding: 8px 16px; border-radius: 4px;">Add Task</button>
+                    </div>
+                </div>
+                <div class="sorting-options">
+                    <label><input type="radio" name="sort-option" value="date" checked> Date Order Only</label>
+                    <label><input type="radio" name="sort-option" value="project"> Project Name Order</label>
+                </div>
+                <table id="workplanTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" onclick="sortTasks('project')">Project <i class="fas fa-sort"></i></th>
+                            <th>Task</th>
+                            <th>Status</th>
+                            <th class="sortable" onclick="sortTasks('dueDate')">Due Date <i class="fas fa-sort"></i></th>
+                            <th>Resource</th>
+                            <th>Parent Task</th>
+                            <th>Actions</th>
+                        </tr>
+                        <tr class="filter-row">
+                            <th><input type="text" id="taskProjectFilter" placeholder="Filter" oninput="renderTasks()"></th>
+                            <th><input type="text" id="taskFilter" placeholder="Filter" oninput="renderTasks()"></th>
+                            <th>
+                                <select id="taskStatusFilter" onchange="renderTasks()">
+                                    <option value="">All Statuses</option>
+                                    <option value="Not Started">Not Started</option>
+                                    <option value="Started">Started</option>
+                                    <option value="25% Complete">25% Complete</option>
+                                    <option value="50% Complete">50% Complete</option>
+                                    <option value="75% Complete">75% Complete</option>
+                                    <option value="Complete">Complete</option>
+                                    <option value="Delayed">Delayed</option>
+                                </select>
+                            </th>
+                            <th><input type="date" id="dueDateFilter" onchange="renderTasks()"></th>
+                            <th><input type="text" id="taskResourceFilter" placeholder="Filter" oninput="renderTasks()"></th>
+                            <th><input type="text" id="parentTaskFilter" placeholder="Filter" oninput="renderTasks()"></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="gantt" class="tab-content">
+            <div class="gantt-container">
+                <h2>Gantt Chart</h2>
+                <div class="gantt-controls">
+                    <button onclick="zoomGantt(1.2)">Zoom In</button>
+                    <button onclick="zoomGantt(0.8)">Zoom Out</button>
+                    <input type="date" id="ganttStartDate" onchange="renderGantt()">
+                    <input type="date" id="ganttEndDate" onchange="renderGantt()">
+                </div>
+                <div class="gantt-timeline" id="ganttTimeline"></div>
+                <div class="gantt-chart" id="ganttChart"></div>
+            </div>
+        </div>
+
+        <div id="team" class="tab-content">
+            <div class="team-container">
+                <div class="table-header">
+                    <h2>Team</h2>
+                    <div class="filters">
+                        <select id="teamResourceFilter" onchange="renderTeam()">
+                            <option value="">All Resources</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="teamMembers"></div>
+            </div>
+        </div>
+
+        <div id="resources" class="tab-content">
+            <div class="resources-container">
+                <div class="table-header">
+                    <h2>Resources</h2>
+                    <button onclick="addResource()" style="background-color: #007bff; color: white; padding: 8px 16px; border-radius: 4px;">Add Resource</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resourcesTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add/Edit Task</h2>
+            <form id="taskForm">
+                <label>Project Topic: <input type="text" id="projectTopic" required></label>
+                <label>Task: <input type="text" id="taskName" required></label>
+                <label>Responsible: 
+                    <select multiple class="multi-select" id="responsible" required>
+                    </select>
+                </label>
+                <label>Start Date: <input type="date" id="startDate" required></label>
+                <label>Finish Date: <input type="date" id="finishDate"></label>
+                <label>Status: 
+                    <select id="status" required>
+                        <option value="Not Started">Not Started</option>
+                        <option value="Started">Started</option>
+                        <option value="25% Complete">25% Complete</option>
+                        <option value="50% Complete">50% Complete</option>
+                        <option value="75% Complete">75% Complete</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                </label>
+                <label>Parent Task: 
+                    <select id="parentTask">
+                        <option value="">None</option>
+                    </select>
+                </label>
+                <button type="submit">Save</button>
+                <button type="button" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <h2 id="projectModalTitle">Add/Edit Project</h2>
+            <form id="projectForm">
+                <label>Project Name: <input type="text" id="projectName" required></label>
+                <button type="submit">Save</button>
+                <button type="button" onclick="closeProjectModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="resourceModal">
+        <div class="modal-content">
+            <h2 id="resourceModalTitle">Add/Edit Resource</h2>
+            <form id="resourceForm">
+                <label>ID: <input type="text" id="resourceId" required></label>
+                <label>Name: <input type="text" id="resourceName" required></label>
+                <label>Role: <input type="text" id="resourceRole" required></label>
+                <label>Email: <input type="email" id="resourceEmail" required></label>
+                <button type="submit">Save</button>
+                <button type="button" onclick="closeResourceModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const defaultTasks = [
+            { id: 1, project: "Commission Meetings", task: "Confirm dates for years meetings", responsible: ["TD"], startDate: "01/03/2025", finishDate: "13/03/2025", status: "Complete", parentId: null },
+            { id: 2, project: "Commission Meetings", task: "Final meetings calendar produced", responsible: ["GA Staff"], startDate: "01/03/2025", finishDate: "19/03/2025", status: "75% Complete", parentId: null },
+            { id: 3, project: "Commission Meetings", task: "Consider Face to Face Commission meeting", responsible: ["TD", "Commission"], startDate: "15/08/2025", finishDate: "01/09/2025", status: "Not Started", parentId: null },
+            { id: 4, project: "Commission Meetings", task: "Determine options for dates for the next year", responsible: ["TD"], startDate: "15/10/2025", finishDate: "01/11/2025", status: "Not Started", parentId: null },
+            { id: 5, project: "Annual Report", task: "Prepare text as advised by GA staff", responsible: ["TD", "GA Staff"], startDate: "15/12/2025", finishDate: "01/01/2026", status: "Not Started", parentId: null },
+            { id: 6, project: "Joint Technical Directors Meeting", task: "Provide items for agenda", responsible: ["TD", "GA Staff"], startDate: "15/01/2025", finishDate: "31/01/2025", status: "Not Started", parentId: null },
+            { id: 7, project: "Joint Technical Directors Meeting", task: "Attend and contribute to discussion", responsible: ["TD", "GA Staff"], startDate: "31/01/2025", finishDate: "31/01/2025", status: "Not Started", parentId: 6 },
+            { id: 8, project: "Joint Technical Directors Meeting", task: "Provide items for agenda", responsible: ["TD", "GA Staff"], startDate: "15/07/2025", finishDate: "31/07/2025", status: "Not Started", parentId: null },
+            { id: 9, project: "Joint Technical Directors Meeting", task: "Attend and contribute to discussion", responsible: ["TD", "GA Staff"], startDate: "31/07/2025", finishDate: "31/07/2025", status: "Not Started", parentId: 8 },
+            { id: 10, project: "Maintain Connection with Community", task: "Plan schedule for Commission updates", responsible: ["TD", "Commission"], startDate: "01/02/2025", finishDate: "28/02/2025", status: "Not Started", parentId: null },
+            { id: 11, project: "Maintain Connection with Community", task: "Prepare Commission update", responsible: ["Commission"], startDate: "15/02/2025", finishDate: "28/02/2025", status: "Not Started", parentId: 10 },
+            { id: 12, project: "Maintain Connection with Community", task: "Plan schedule for Commission updates", responsible: ["TD", "Commission"], startDate: "01/08/2025", finishDate: "31/08/2025", status: "Not Started", parentId: null },
+            { id: 13, project: "Maintain Connection with Community", task: "Prepare Commission update", responsible: ["Commission"], startDate: "15/08/2025", finishDate: "31/08/2025", status: "Not Started", parentId: 12 },
+            { id: 14, project: "Gymsport Workplans", task: "Review existing workplan", responsible: ["Commission", "GA Staff"], startDate: "15/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: null },
+            { id: 15, project: "Gymsport Workplans", task: "Confirm actions for the year", responsible: ["Commission", "GA Staff"], startDate: "15/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 14 },
+            { id: 16, project: "Gymsport Workplans", task: "Review workplan and update as required", responsible: ["Commission", "GA Staff"], startDate: "15/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 14 },
+            { id: 17, project: "Gymsport Workplans", task: "Review workplan and update as required", responsible: ["Commission", "GA Staff"], startDate: "15/07/2025", finishDate: "31/07/2025", status: "Not Started", parentId: 14 },
+            { id: 18, project: "Gymsport Workplans", task: "Review workplan and update as required", responsible: ["Commission", "GA Staff"], startDate: "15/10/2025", finishDate: "31/10/2025", status: "Not Started", parentId: 14 },
+            { id: 19, project: "Gymsport Awards", task: "Review Gymsport Awards Policy", responsible: ["Commission", "GA Staff"], startDate: "15/07/2025", finishDate: "01/08/2025", status: "Not Started", parentId: null },
+            { id: 20, project: "Gymsport Awards", task: "Make recommendations for change if needed", responsible: ["Commission"], startDate: "15/08/2025", finishDate: "01/09/2025", status: "Not Started", parentId: 19 },
+            { id: 21, project: "Australian Gymnastics Championships (ex GfA)", task: "Competition schedule", responsible: ["GA Staff", "TD"], startDate: "01/05/2025", finishDate: "11/06/2025", status: "Not Started", parentId: null },
+            { id: 22, project: "Australian Gymnastics Championships (ex GfA)", task: "Community meetings schedule", responsible: ["Commission", "GA Staff"], startDate: "15/05/2025", finishDate: "16/06/2025", status: "Not Started", parentId: 21 },
+            { id: 23, project: "Australian Gymnastics Championships (ex GfA)", task: "Competition schedule", responsible: ["GA Staff", "TD"], startDate: "01/05/2025", finishDate: "10/06/2025", status: "Not Started", parentId: null },
+            { id: 24, project: "Australian Gymnastics Championships (ex GfA)", task: "Community meetings schedule", responsible: ["Commission", "GA Staff"], startDate: "15/05/2025", finishDate: "15/06/2025", status: "Not Started", parentId: 23 },
+            { id: 25, project: "Judge Payments", task: "Maintain records of judges allocations", responsible: ["JC", "GA Staff"], startDate: "01/07/2025", finishDate: "17/07/2025", status: "Not Started", parentId: null },
+            { id: 26, project: "Judge Payments", task: "Submit judge payments", responsible: ["JC", "GA Staff"], startDate: "15/07/2025", finishDate: "31/07/2025", status: "Not Started", parentId: 25 },
+            { id: 27, project: "Technical Regulations", task: "Review existing regulations", responsible: ["Commission", "GA Staff"], startDate: "01/01/2025", finishDate: "31/07/2025", status: "Not Started", parentId: null },
+            { id: 28, project: "Technical Regulations", task: "Create 'draft' to use for markup", responsible: ["GA Staff"], startDate: "01/01/2025", finishDate: "01/01/2025", status: "Complete", parentId: 27 },
+            { id: 29, project: "Technical Regulations", task: "Provide feedback", responsible: ["Commission"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 27 },
+            { id: 30, project: "Technical Regulations", task: "Update Technical Regulations", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 27 },
+            { id: 31, project: "Technical Regulations", task: "Technical Regulations published", responsible: ["GA Staff"], startDate: "15/07/2025", finishDate: "31/07/2025", status: "Not Started", parentId: 27 },
+            { id: 32, project: "International Events", task: "Prepare Bid for FIG (World Cup 2027 & 2029)", responsible: ["Darren", "GA Staff"], startDate: "15/04/2025", finishDate: "01/05/2025", status: "Not Started", parentId: null },
+            { id: 33, project: "International Events", task: "Bid submitted", responsible: ["Darren", "GA Staff"], startDate: "15/04/2025", finishDate: "01/05/2025", status: "Not Started", parentId: 32 },
+            { id: 34, project: "National Levels Program", task: "Review existing program", responsible: ["Commission", "GA Staff"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: null },
+            { id: 35, project: "National Levels Program", task: "Provide feedback", responsible: ["Commission"], startDate: "15/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 34 },
+            { id: 36, project: "National Levels Program", task: "Update program", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 34 },
+            { id: 37, project: "National Levels Program", task: "Program published", responsible: ["GA Staff"], startDate: "15/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 34 },
+            { id: 38, project: "National Event Hosting", task: "Review State allocations", responsible: ["GA Staff", "Commission"], startDate: "01/02/2025", finishDate: "28/02/2025", status: "Not Started", parentId: null },
+            { id: 39, project: "National Event Hosting", task: "Provide feedback", responsible: ["Commission"], startDate: "15/02/2025", finishDate: "28/02/2025", status: "Not Started", parentId: 38 },
+            { id: 40, project: "National Event Hosting", task: "Confirm allocations", responsible: ["GA Staff"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 38 },
+            { id: 41, project: "Education", task: "Review Beginner Coach course", responsible: ["Lynne", "GA Staff"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: null },
+            { id: 42, project: "Education", task: "Provide feedback", responsible: ["Lynne"], startDate: "15/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 41 },
+            { id: 43, project: "Education", task: "Update course", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 41 },
+            { id: 44, project: "Education", task: "Review Intermediate Coach course", responsible: ["Lynne", "GA Staff"], startDate: "01/06/2025", finishDate: "30/06/2025", status: "Not Started", parentId: null },
+            { id: 45, project: "Education", task: "Provide feedback", responsible: ["Lynne"], startDate: "15/06/2025", finishDate: "30/06/2025", status: "Not Started", parentId: 44 },
+            { id: 46, project: "Education", task: "Update course", responsible: ["GA Staff"], startDate: "01/07/2025", finishDate: "31/07/2025", status: "Not Started", parentId: 44 },
+            { id: 47, project: "Education", task: "Review Judge course", responsible: ["JC", "GA Staff"], startDate: "01/09/2025", finishDate: "30/09/2025", status: "Not Started", parentId: null },
+            { id: 48, project: "Education", task: "Provide feedback", responsible: ["JC"], startDate: "15/09/2025", finishDate: "30/09/2025", status: "Not Started", parentId: 47 },
+            { id: 49, project: "Education", task: "Update course", responsible: ["GA Staff"], startDate: "01/10/2025", finishDate: "31/10/2025", status: "Not Started", parentId: 47 },
+            { id: 50, project: "State Association Meetings", task: "Attend meetings", responsible: ["TD", "GA Staff"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: null },
+            { id: 51, project: "State Association Meetings", task: "Attend meetings", responsible: ["TD", "GA Staff"], startDate: "01/06/2025", finishDate: "30/06/2025", status: "Not Started", parentId: null },
+            { id: 52, project: "State Association Meetings", task: "Attend meetings", responsible: ["TD", "GA Staff"], startDate: "01/09/2025", finishDate: "30/09/2025", status: "Not Started", parentId: null },
+            { id: 53, project: "State Association Meetings", task: "Attend meetings", responsible: ["TD", "GA Staff"], startDate: "01/12/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 54, project: "GA Community Forums", task: "Attend forums", responsible: ["TD", "Commission"], startDate: "15/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: null },
+            { id: 55, project: "GA Community Forums", task: "Attend forums", responsible: ["TD", "Commission"], startDate: "15/06/2025", finishDate: "30/06/2025", status: "Not Started", parentId: null },
+            { id: 56, project: "GA Community Forums", task: "Attend forums", responsible: ["TD", "Commission"], startDate: "15/09/2025", finishDate: "30/09/2025", status: "Not Started", parentId: null },
+            { id: 57, project: "GA Community Forums", task: "Attend forums", responsible: ["TD", "Commission"], startDate: "15/12/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 58, project: "FIG Apparatus Norms", task: "Review updates", responsible: ["Commission", "GA Staff"], startDate: "01/01/2025", finishDate: "31/01/2025", status: "Not Started", parentId: null },
+            { id: 59, project: "FIG Apparatus Norms", task: "Provide feedback", responsible: ["Commission"], startDate: "15/01/2025", finishDate: "31/01/2025", status: "Not Started", parentId: 58 },
+            { id: 60, project: "FIG Apparatus Norms", task: "Update norms", responsible: ["GA Staff"], startDate: "01/02/2025", finishDate: "28/02/2025", status: "Not Started", parentId: 58 },
+            { id: 61, project: "Newsletter", task: "Prepare articles", responsible: ["TD", "GA Staff"], startDate: "01/02/2025", finishDate: "28/02/2025", status: "Not Started", parentId: null },
+            { id: 62, project: "Newsletter", task: "Prepare articles", responsible: ["TD", "GA Staff"], startDate: "01/05/2025", finishDate: "31/05/2025", status: "Not Started", parentId: null },
+            { id: 63, project: "Newsletter", task: "Prepare articles", responsible: ["TD", "GA Staff"], startDate: "01/08/2025", finishDate: "31/08/2025", status: "Not Started", parentId: null },
+            { id: 64, project: "Newsletter", task: "Prepare articles", responsible: ["TD", "GA Staff"], startDate: "01/11/2025", finishDate: "30/11/2025", status: "Not Started", parentId: null },
+            { id: 65, project: "Website", task: "Review content", responsible: ["GA Staff"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: null },
+            { id: 66, project: "Website", task: "Update content", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 65 },
+            { id: 67, project: "Strategic Plan Actions", task: "Grow participation", responsible: ["GA Staff", "Commission"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 68, project: "Strategic Plan Actions", task: "Develop survey", responsible: ["GA Staff"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 67 },
+            { id: 69, project: "Strategic Plan Actions", task: "Conduct survey", responsible: ["Commission"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 67 },
+            { id: 70, project: "Strategic Plan Actions", task: "Grow education", responsible: ["Lynne", "GA Staff"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 71, project: "Strategic Plan Actions", task: "Review course offerings", responsible: ["Lynne"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 70 },
+            { id: 72, project: "Strategic Plan Actions", task: "Update offerings", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 70 },
+            { id: 73, project: "Strategic Plan Actions", task: "Develop the community", responsible: ["TD", "Commission"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 74, project: "Strategic Plan Actions", task: "Plan community events", responsible: ["TD"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 73 },
+            { id: 75, project: "Strategic Plan Actions", task: "Conduct events", responsible: ["Commission"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 73 },
+            { id: 76, project: "Strategic Plan Actions", task: "Grow pathways", responsible: ["GA Staff", "Commission"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 77, project: "Strategic Plan Actions", task: "Review pathways", responsible: ["Commission"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 76 },
+            { id: 78, project: "Strategic Plan Actions", task: "Update pathways", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 76 },
+            { id: 79, project: "Strategic Plan Actions", task: "Grow events", responsible: ["GA Staff", "TD"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 80, project: "Strategic Plan Actions", task: "Plan new events", responsible: ["TD"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 79 },
+            { id: 81, project: "Strategic Plan Actions", task: "Conduct events", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 79 },
+            { id: 82, project: "Strategic Plan Actions", task: "Develop volunteers", responsible: ["GA Staff", "Commission"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 83, project: "Strategic Plan Actions", task: "Plan volunteer program", responsible: ["Commission"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 82 },
+            { id: 84, project: "Strategic Plan Actions", task: "Implement program", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 82 },
+            { id: 85, project: "Strategic Plan Actions", task: "Develop officials", responsible: ["JC", "GA Staff"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 86, project: "Strategic Plan Actions", task: "Plan officials training", responsible: ["JC"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 85 },
+            { id: 87, project: "Strategic Plan Actions", task: "Conduct training", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 85 },
+            { id: 88, project: "Strategic Plan Actions", task: "Develop partnerships", responsible: ["GA Staff", "TD"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 89, project: "Strategic Plan Actions", task: "Identify partners", responsible: ["TD"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 88 },
+            { id: 90, project: "Strategic Plan Actions", task: "Establish partnerships", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 88 },
+            { id: 91, project: "Strategic Plan Actions", task: "Grow brand", responsible: ["GA Staff", "Commission"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 92, project: "Strategic Plan Actions", task: "Develop branding strategy", responsible: ["Commission"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 91 },
+            { id: 93, project: "Strategic Plan Actions", task: "Implement strategy", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 91 },
+            { id: 94, project: "Strategic Plan Actions", task: "Develop performance", responsible: ["GA Staff", "TD"], startDate: "01/01/2025", finishDate: "31/12/2025", status: "Not Started", parentId: null },
+            { id: 95, project: "Strategic Plan Actions", task: "Review performance metrics", responsible: ["TD"], startDate: "01/03/2025", finishDate: "31/03/2025", status: "Not Started", parentId: 94 },
+            { id: 96, project: "Strategic Plan Actions", task: "Update metrics", responsible: ["GA Staff"], startDate: "01/04/2025", finishDate: "30/04/2025", status: "Not Started", parentId: 94 }
+        ];
+
+        const defaultResources = {
+            "TD": { name: "Technical Director", role: "Technical Director", email: "td@example.com" },
+            "GA Staff": { name: "GA Staff", role: "Support Staff", email: "ga.staff@example.com" },
+            "Commission": { name: "Commission Team", role: "Commission", email: "commission@example.com" },
+            "Lynne": { name: "Lynne Smith", role: "Education Lead", email: "lynne@example.com" },
+            "Darren": { name: "Darren Jones", role: "Events Coordinator", email: "darren@example.com" },
+            "JC": { name: "Judges Coordinator", role: "Judges Coordinator", email: "jc@example.com" }
+        };
+
+        let tasks = [];
+        let teamProfiles = {};
+        let zoomFactor = 1;
+        let sortField = 'project'; // Default sort by project
+        let sortDirection = 'asc'; // Default sort direction
+        let projectOrder = []; // To store the custom order of projects
+
+        function initializeTasks() {
+            const storedTasks = localStorage.getItem('workplanTasks');
+            if (storedTasks) {
+                try {
+                    tasks = JSON.parse(storedTasks);
+                    if (!Array.isArray(tasks) || tasks.length === 0 || !tasks[0].id) {
+                        tasks = [...defaultTasks];
+                        localStorage.setItem('workplanTasks', JSON.stringify(tasks));
+                    }
+                } catch (e) {
+                    tasks = [...defaultTasks];
+                    localStorage.setItem('workplanTasks', JSON.stringify(tasks));
+                }
+            } else {
+                tasks = [...defaultTasks];
+                localStorage.setItem('workplanTasks', JSON.stringify(tasks));
+            }
+            initializeProjectOrder();
+        }
+
+        function initializeResources() {
+            const storedResources = localStorage.getItem('teamProfiles');
+            if (storedResources) {
+                try {
+                    teamProfiles = JSON.parse(storedResources);
+                    if (!teamProfiles || Object.keys(teamProfiles).length === 0) {
+                        teamProfiles = { ...defaultResources };
+                        localStorage.setItem('teamProfiles', JSON.stringify(teamProfiles));
+                    }
+                } catch (e) {
+                    teamProfiles = { ...defaultResources };
+                    localStorage.setItem('teamProfiles', JSON.stringify(teamProfiles));
+                }
+            } else {
+                teamProfiles = { ...defaultResources };
+                localStorage.setItem('teamProfiles', JSON.stringify(teamProfiles));
+            }
+            updateResourceDropdowns();
+        }
+
+        function initializeProjectOrder() {
+            const storedOrder = localStorage.getItem('projectOrder');
+            if (storedOrder) {
+                try {
+                    projectOrder = JSON.parse(storedOrder);
+                    const currentProjects = [...new Set(tasks.map(task => task.project))];
+                    projectOrder = projectOrder.filter(project => currentProjects.includes(project));
+                    currentProjects.forEach(project => {
+                        if (!projectOrder.includes(project)) {
+                            projectOrder.push(project);
+                        }
+                    });
+                } catch (e) {
+                    projectOrder = [...new Set(tasks.map(task => task.project))];
+                    localStorage.setItem('projectOrder', JSON.stringify(projectOrder));
+                }
+            } else {
+                projectOrder = [...new Set(tasks.map(task => task.project))];
+                localStorage.setItem('projectOrder', JSON.stringify(projectOrder));
+            }
+        }
+
+        function updateResourceDropdowns() {
+            const resourceOptions = Object.keys(teamProfiles).map(id => `<option value="${id}">${teamProfiles[id].name}</option>`).join('');
+            document.getElementById('dashboardResourceFilter').innerHTML = `<option value="">All Resources</option>${resourceOptions}`;
+            document.getElementById('teamResourceFilter').innerHTML = `<option value="">All Resources</option>${resourceOptions}`;
+            document.getElementById('responsible').innerHTML = resourceOptions;
+        }
+
+        function saveTasks() {
+            localStorage.setItem('workplanTasks', JSON.stringify(tasks));
+            initializeProjectOrder();
+            renderDashboard();
+            renderProjects();
+            renderTasks();
+            renderGantt();
+            renderTeam();
+            renderResources();
+        }
+
+        function saveResources() {
+            localStorage.setItem('teamProfiles', JSON.stringify(teamProfiles));
+            updateResourceDropdowns();
+            renderDashboard();
+            renderProjects();
+            renderTasks();
+            renderGantt();
+            renderTeam();
+            renderResources();
+        }
+
+        function saveProjectOrder() {
+            localStorage.setItem('projectOrder', JSON.stringify(projectOrder));
+            renderProjects();
+        }
+
+        function parseDate(dateStr) {
+            const [day, month, year] = dateStr.split('/').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function getTaskStatus(task) {
+            if (task.status === "Complete") return "Complete";
+            const today = new Date();
+            const finishDate = parseDate(task.finishDate);
+            if (finishDate < today && task.status !== "Complete") return "Delayed";
+            if (task.status === "Not Started") return "Not Started";
+            return "In Progress";
+        }
+
+        // Add task to project function
+        function addTaskToProject(projectName) {
+            // Get the next available task ID
+            const nextId = tasks.length > 0 ? Math.max(...tasks.map(task => task.id)) + 1 : 1;
+            
+            // Create a new task object with default values
+            const newTask = {
+                id: nextId,
+                project: projectName,
+                task: "New Task",
+                responsible: [],
+                startDate: formatDate(new Date()),
+                finishDate: formatDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)), // Default to 1 week from now
+                status: "Not Started",
+                parentId: null
+            };
+            
+            // Add the task to the tasks array
+            tasks.push(newTask);
+            
+            // Save tasks to localStorage
+            saveTasks();
+            
+            // Open the edit task modal for the new task
+            editTask(nextId);
+            
+            // Re-render the projects view
+            renderProjects();
+        }
+
+        function renderDashboard() {
+            const resourceFilter = document.getElementById('dashboardResourceFilter').value;
+            const filteredTasks = resourceFilter ? tasks.filter(task => task.responsible.includes(resourceFilter)) : tasks;
+
+            const totalProjects = new Set(filteredTasks.map(task => task.project)).size;
+            const completedTasks = filteredTasks.filter(task => task.status === "Complete").length;
+            const completedPercentage = filteredTasks.length ? Math.round((completedTasks / filteredTasks.length) * 100) : 0;
+            const today = new Date();
+            const next30Days = new Date(today);
+            next30Days.setDate(today.getDate() + 30);
+            const upcomingDeadlines = filteredTasks.filter(task => {
+                const finishDate = parseDate(task.finishDate);
+                return finishDate >= today && finishDate <= next30Days && task.status !== "Complete";
+            }).length;
+            
+            // Calculate overdue tasks (due date passed and not complete)
+            const overdueTasks = filteredTasks.filter(task => {
+                const finishDate = parseDate(task.finishDate);
+                return finishDate < today && task.status !== "Complete";
+            }).length;
+
+            document.getElementById('totalProjects').innerText = totalProjects;
+            document.getElementById('completedTasks').innerText = `${completedPercentage}%`;
+            document.getElementById('upcomingDeadlines').innerHTML = `${upcomingDeadlines} <span style="font-size: 14px; font-weight: normal;">Next 30 days</span>`;
+            document.getElementById('overdueTasks').innerText = overdueTasks;
+
+            const upcomingDeadlinesCard = document.getElementById('upcomingDeadlinesCard');
+            upcomingDeadlinesCard.onclick = () => {
+                document.querySelector('.sidebar ul li[data-tab="tasks"]').click();
+                const dueDateFilter = document.getElementById('dueDateFilter');
+                dueDateFilter.value = ''; // Clear existing filter
+                renderTasks(true); // Pass flag to filter by upcoming deadlines
+            };
+            
+            // Make the overdue tasks card clickable
+            const overdueTasksCard = document.getElementById('overdueTasksCard');
+            overdueTasksCard.onclick = () => {
+                document.querySelector('.sidebar ul li[data-tab="tasks"]').click();
+                const statusFilter = document.getElementById('taskStatusFilter');
+                statusFilter.value = 'Delayed';
+                renderTasks();
+            };
+
+            const statusCanvas = document.getElementById('statusChart');
+            const statusCtx = statusCanvas.getContext('2d');
+            const statusCounts = {
+                "Not Started": 0,
+                "In Progress": 0,
+                "Completed": 0,
+                "Delayed": 0
+            };
+            filteredTasks.forEach(task => {
+                const status = getTaskStatus(task);
+                if (status === "Not Started") statusCounts["Not Started"]++;
+                else if (status === "Complete") statusCounts["Completed"]++;
+                else if (status === "Delayed") statusCounts["Delayed"]++;
+                else statusCounts["In Progress"]++;
+            });
+            const totalTasks = filteredTasks.length;
+            const statusColors = ['#e9ecef', '#007bff', '#28a745', '#dc3545'];
+            const statusLabels = ["Not Started", "In Progress", "Completed", "Delayed"];
+            let startAngle = 0;
+            const segments = [];
+
+            statusCtx.clearRect(0, 0, statusCanvas.width, statusCanvas.height);
+            Object.entries(statusCounts).forEach(([status, count], index) => {
+                if (count > 0) {
+                    const sliceAngle = (count / totalTasks) * 2 * Math.PI;
+                    statusCtx.beginPath();
+                    statusCtx.arc(100, 100, 80, startAngle, startAngle + sliceAngle);
+                    statusCtx.arc(100, 100, 40, startAngle + sliceAngle, startAngle, true);
+                    statusCtx.fillStyle = statusColors[index];
+                    statusCtx.fill();
+                    segments.push({ status: statusLabels[index], startAngle, endAngle: startAngle + sliceAngle, color: statusColors[index] });
+                    startAngle += sliceAngle;
+                }
+            });
+
+            const legendContainer = document.getElementById('statusChartLegend');
+            legendContainer.innerHTML = '';
+            statusLabels.forEach((label, index) => {
+                if (statusCounts[label] > 0) {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    legendItem.innerHTML = `
+                        <span class="legend-color" style="background-color: ${statusColors[index]};"></span>
+                        <span>${label} (${statusCounts[label]})</span>
+                    `;
+                    legendContainer.appendChild(legendItem);
+                }
+            });
+
+            statusCanvas.onclick = (e) => {
+                const rect = statusCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left - 100;
+                const y = e.clientY - rect.top - 100;
+                const angle = Math.atan2(y, x) < 0 ? Math.atan2(y, x) + 2 * Math.PI : Math.atan2(y, x);
+                const distance = Math.sqrt(x * x + y * y);
+
+                if (distance >= 40 && distance <= 80) {
+                    const segment = segments.find(seg => angle >= seg.startAngle && angle <= seg.endAngle);
+                    if (segment) {
+                        document.querySelector('.sidebar ul li[data-tab="tasks"]').click();
+                        const statusFilter = document.getElementById('taskStatusFilter');
+                        statusFilter.value = segment.status === "Completed" ? "Complete" : segment.status;
+                        renderTasks();
+                    }
+                }
+            };
+
+            const resourceCanvas = document.getElementById('resourceChart');
+            const resourceCtx = resourceCanvas.getContext('2d');
+            const resourceCounts = {};
+            Object.keys(teamProfiles).forEach(resource => {
+                resourceCounts[resource] = 0;
+            });
+            filteredTasks.forEach(task => {
+                task.responsible.forEach(resource => {
+                    if (resourceCounts[resource] !== undefined) {
+                        resourceCounts[resource]++;
+                    }
+                });
+            });
+
+            resourceCtx.clearRect(0, 0, resourceCanvas.width, resourceCanvas.height);
+            const barWidth = 40;
+            const maxCount = Math.max(...Object.values(resourceCounts));
+            const scale = maxCount ? 150 / maxCount : 1;
+            const barPositions = [];
+            Object.entries(resourceCounts).forEach(([resource, count], index) => {
+                const barHeight = count * scale;
+                const x = index * 60 + 20;
+                resourceCtx.fillStyle = statusColors[index % statusColors.length];
+                resourceCtx.fillRect(x, 200 - barHeight, barWidth, barHeight);
+                resourceCtx.fillStyle = '#333';
+                resourceCtx.font = '12px Roboto';
+                resourceCtx.textAlign = 'center';
+                // Display resource name on the bar
+                resourceCtx.fillText(teamProfiles[resource].name, x + barWidth / 2, 200 - barHeight - 10);
+                resourceCtx.fillText(count, x + barWidth / 2, 190 - barHeight);
+                // Remove the bottom label since it's now on the bar
+                // resourceCtx.fillText(teamProfiles[resource].name, x + barWidth / 2, 220);
+                barPositions.push({ resource, x, width: barWidth, height: barHeight });
+            });
+
+            resourceCanvas.onclick = (e) => {
+                const rect = resourceCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const bar = barPositions.find(pos => x >= pos.x && x <= pos.x + pos.width && y <= 200 && y >= 200 - pos.height);
+                if (bar) {
+                    document.querySelector('.sidebar ul li[data-tab="tasks"]').click();
+                    const resourceFilter = document.getElementById('taskResourceFilter');
+                    resourceFilter.value = bar.resource;
+                    renderTasks();
+                }
+            };
+        }
+
+        function renderProjects() {
+            const projectsTable = document.getElementById('projectsTable');
+            const projectMap = {};
+            tasks.forEach(task => {
+                if (!projectMap[task.project]) {
+                    projectMap[task.project] = { tasks: [], total: 0, completed: 0 };
+                }
+                projectMap[task.project].tasks.push(task);
+                projectMap[task.project].total++;
+                if (task.status === "Complete") projectMap[task.project].completed++;
+            });
+
+            const projectNameFilter = document.getElementById('projectNameFilter').value.toLowerCase();
+            const totalTasksFilter = document.getElementById('totalTasksFilter').value;
+            const completedTasksFilter = document.getElementById('completedTasksFilter').value;
+            const progressFilter = document.getElementById('progressFilter').value;
+
+            // Sort projects according to projectOrder
+            const filteredProjects = projectOrder.filter(project => {
+                const proj = projectMap[project];
+                if (!proj) return false;
+                const progress = proj.total ? Math.round((proj.completed / proj.total) * 100) : 0;
+                return (
+                    (!projectNameFilter || project.toLowerCase().includes(projectNameFilter)) &&
+                    (!totalTasksFilter || proj.total.toString().includes(totalTasksFilter)) &&
+                    (!completedTasksFilter || proj.completed.toString().includes(completedTasksFilter)) &&
+                    (!progressFilter || progress.toString().includes(progressFilter))
+                );
+            });
+
+            projectsTable.innerHTML = '';
+            filteredProjects.forEach(project => {
+                const proj = projectMap[project];
+                const progress = proj.total ? Math.round((proj.completed / proj.total) * 100) : 0;
+                const row = document.createElement('tr');
+                row.className = 'project-row draggable';
+                row.setAttribute('draggable', 'true');
+                row.setAttribute('data-project', project);
+                // Add expandable class to project name cell if it has tasks
+                const hasProjectTasks = proj.tasks.length > 0;
+                row.innerHTML = `
+                    <td class="${hasProjectTasks ? 'expandable' : ''}">${project}</td>
+                    <td>${proj.total}</td>
+                    <td>${proj.completed}</td>
+                    <td>${progress}%</td>
+                    <td class="actions">
+                        <button onclick="editProject('${project}')">Edit</button>
+                        <button onclick="duplicateProject('${project}')">Duplicate</button>
+                        <button onclick="addTaskToProject('${project}')" class="add-task-btn">Add Task</button>
+                    </td>
+                `;
+                projectsTable.appendChild(row);
+                
+                // Create task rows for this project (initially hidden)
+                if (hasProjectTasks) {
+                    proj.tasks.forEach(task => {
+                        const taskRow = document.createElement('tr');
+                        taskRow.className = 'project-task';
+                        taskRow.setAttribute('data-project', project);
+                        
+                        // Get status class for styling
+                        const displayStatus = getTaskStatus(task);
+                        const statusClass = displayStatus === "Complete" ? "status-completed" :
+                                           displayStatus === "Delayed" ? "status-delayed" :
+                                           displayStatus === "Not Started" ? "status-not-started" : "status-in-progress";
+                        
+                        taskRow.innerHTML = `
+                            <td style="padding-left: 30px;">→ ${task.task}</td>
+                            <td class="resource-cell" data-task-id="${task.id}"></td>
+                            <td class="status-cell" data-task-id="${task.id}"></td>
+                            <td>${task.finishDate}</td>
+                            <td class="actions">
+                                <button onclick="editTask(${task.id})">Edit</button>
+                            </td>
+                        `;
+                        taskRow.style.display = 'none'; // Initially hidden
+                        projectsTable.appendChild(taskRow);
+                        
+                        // Add dropdowns for resource and status
+                        const resourceCell = taskRow.querySelector(`.resource-cell[data-task-id="${task.id}"]`);
+                        const statusCell = taskRow.querySelector(`.status-cell[data-task-id="${task.id}"]`);
+                        
+                        // Create resource dropdown
+                        const resourceDropdown = document.createElement('select');
+                        resourceDropdown.className = 'resource-dropdown';
+                        resourceDropdown.setAttribute('data-task-id', task.id);
+                        resourceDropdown.multiple = true;
+                        
+                        Object.keys(teamProfiles).forEach(resourceId => {
+                            const option = document.createElement('option');
+                            option.value = resourceId;
+                            option.textContent = teamProfiles[resourceId].name;
+                            if (task.responsible.includes(resourceId)) {
+                                option.selected = true;
+                            }
+                            resourceDropdown.appendChild(option);
+                        });
+                        
+                        resourceDropdown.onchange = function() {
+                            const taskId = this.getAttribute('data-task-id');
+                            const selectedOptions = Array.from(this.selectedOptions).map(option => option.value);
+                            const taskIndex = tasks.findIndex(t => t.id === parseInt(taskId));
+                            if (taskIndex !== -1) {
+                                tasks[taskIndex].responsible = selectedOptions;
+                                saveTasks();
+                                renderProjects();
+                            }
+                        };
+                        
+                        resourceCell.appendChild(resourceDropdown);
+                        
+                        // Create status dropdown
+                        const statusDropdown = document.createElement('select');
+                        statusDropdown.className = 'status-dropdown';
+                        statusDropdown.setAttribute('data-task-id', task.id);
+                        
+                        const statuses = ["Not Started", "In Progress", "Complete"];
+                        statuses.forEach(status => {
+                            const option = document.createElement('option');
+                            option.value = status;
+                            option.textContent = status;
+                            if (status === task.status) {
+                                option.selected = true;
+                            }
+                            statusDropdown.appendChild(option);
+                        });
+                        
+                        statusDropdown.onchange = function() {
+                            const taskId = this.getAttribute('data-task-id');
+                            const newStatus = this.value;
+                            const taskIndex = tasks.findIndex(t => t.id === parseInt(taskId));
+                            if (taskIndex !== -1) {
+                                tasks[taskIndex].status = newStatus;
+                                saveTasks();
+                                renderProjects();
+                            }
+                        };
+                        
+                        statusCell.appendChild(statusDropdown);
+                    });
+                    
+                    // Add click event to expandable cell
+                    const expandableCell = row.querySelector('.expandable');
+                    if (expandableCell) {
+                        expandableCell.style.cursor = 'pointer';
+                        expandableCell.onclick = () => {
+                            expandableCell.classList.toggle('expanded');
+                            const projectTasks = projectsTable.querySelectorAll(`tr.project-task[data-project="${project}"]`);
+                            projectTasks.forEach(taskRow => {
+                                taskRow.style.display = taskRow.style.display === 'none' ? 'table-row' : 'none';
+                            });
+                        };
+                    }
+                }
+            });
+
+            // Add drag-and-drop functionality for reordering projects
+            const projectRows = document.querySelectorAll('.project-row');
+            projectRows.forEach(row => {
+                row.addEventListener('dragstart', (e) => {
+                    row.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', row.getAttribute('data-project'));
+                });
+
+                row.addEventListener('dragend', () => {
+                    row.classList.remove('dragging');
+                    const newOrder = Array.from(projectsTable.querySelectorAll('.project-row')).map(r => r.getAttribute('data-project'));
+                    projectOrder = newOrder;
+                    saveProjectOrder();
+                });
+
+                row.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const draggingRow = document.querySelector('.dragging');
+                    const afterElement = getDragAfterElement(projectsTable, e.clientY);
+                    if (afterElement == null) {
+                        projectsTable.appendChild(draggingRow);
+                    } else {
+                        projectsTable.insertBefore(draggingRow, afterElement);
+                    }
+                });
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.project-row:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function sortTasks(field) {
+            if (sortField === field) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortField = field;
+                sortDirection = 'asc';
+            }
+            renderTasks();
+            // Update sort icons
+            document.querySelectorAll('#workplanTable th i').forEach(icon => {
+                icon.className = 'fas fa-sort';
+            });
+            const sortIcon = document.querySelector(`#workplanTable th[onclick="sortTasks('${field}')"] i`);
+            sortIcon.className = sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+        }
+
+        function sortTasksByProjectAndParent(taskList) {
+            const taskMap = {};
+            const rootTasks = [];
+            taskList.forEach(task => {
+                taskMap[task.id] = { ...task, children: [] };
+            });
+            taskList.forEach(task => {
+                if (task.parentId) {
+                    if (taskMap[task.parentId]) {
+                        taskMap[task.parentId].children.push(taskMap[task.id]);
+                    }
+                } else {
+                    rootTasks.push(taskMap[task.id]);
+                }
+            });
+            const result = [];
+            const projectGroups = {};
+            rootTasks.forEach(task => {
+                if (!projectGroups[task.project]) {
+                    projectGroups[task.project] = [];
+                }
+                projectGroups[task.project].push(task);
+            });
+            projectOrder.forEach(project => {
+                if (projectGroups[project]) {
+                    projectGroups[project].forEach(task => {
+                        const addTaskWithChildren = (t) => {
+                            result.push(t);
+                            t.children.forEach(child => addTaskWithChildren(child));
+                        };
+                        addTaskWithChildren(task);
+                    });
+                }
+            });
+            return result;
+        }
+
+        function renderTasks(filterUpcomingDeadlines = false) {
+            const tbody = document.getElementById('tableBody');
+            const taskFilter = document.getElementById('taskFilter').value.toLowerCase();
+            const taskProjectFilter = document.getElementById('taskProjectFilter').value.toLowerCase();
+            const taskStatusFilter = document.getElementById('taskStatusFilter').value;
+            const dueDateFilter = document.getElementById('dueDateFilter').value;
+            const taskResourceFilter = document.getElementById('taskResourceFilter').value.toLowerCase();
+            const parentTaskFilter = document.getElementById('parentTaskFilter').value.toLowerCase();
+
+            let filteredTasks = tasks;
+            if (filterUpcomingDeadlines) {
+                const today = new Date();
+                const next30Days = new Date(today);
+                next30Days.setDate(today.getDate() + 30);
+                filteredTasks = tasks.filter(task => {
+                    const finishDate = parseDate(task.finishDate);
+                    return finishDate >= today && finishDate <= next30Days && task.status !== "Complete";
+                });
+            }
+
+            filteredTasks = filteredTasks.filter(task => {
+                const displayStatus = getTaskStatus(task);
+                const parentTask = tasks.find(t => t.id === task.parentId);
+                return (
+                    (!taskFilter || task.task.toLowerCase().includes(taskFilter)) &&
+                    (!taskProjectFilter || task.project.toLowerCase().includes(taskProjectFilter)) &&
+                    (!taskStatusFilter || (taskStatusFilter === "Delayed" ? displayStatus === "Delayed" : task.status === taskStatusFilter)) &&
+                    (!dueDateFilter || task.finishDate.includes(dueDateFilter)) &&
+                    (!taskResourceFilter || task.responsible.some(r => r.toLowerCase().includes(taskResourceFilter))) &&
+                    (!parentTaskFilter || (parentTask && parentTask.task.toLowerCase().includes(parentTaskFilter)))
+                );
+            });
+
+            // Sort tasks based on selected sorting option and sortField/sortDirection
+            const sortOption = document.querySelector('input[name="sort-option"]:checked').value;
+            
+            if (sortOption === 'date') {
+                // Sort by date only
+                filteredTasks.sort((a, b) => {
+                    const dateA = parseDate(a.finishDate);
+                    const dateB = parseDate(b.finishDate);
+                    return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+                });
+            } else {
+                // Sort by project name with subtasks in date order
+                filteredTasks.sort((a, b) => {
+                    let comparison = 0;
+                    if (sortField === 'project') {
+                        comparison = a.project.localeCompare(b.project);
+                    } else if (sortField === 'dueDate') {
+                        const dateA = parseDate(a.finishDate);
+                        const dateB = parseDate(b.finishDate);
+                        comparison = dateA - dateB;
+                    }
+                    return sortDirection === 'asc' ? comparison : -comparison;
+                });
+                
+                // Rebuild the task hierarchy after sorting
+                filteredTasks = sortTasksByProjectAndParent(filteredTasks);
+            }
+
+            tbody.innerHTML = '';
+            filteredTasks.forEach(task => {
+                const hasSubtasks = tasks.some(t => t.parentId === task.id);
+                const row = document.createElement('tr');
+                row.className = 'task-row';
+                row.setAttribute('data-task-id', task.id);
+                if (task.parentId) {
+                    row.classList.add('subtask');
+                }
+                const displayStatus = getTaskStatus(task);
+                const statusClass = displayStatus === "Complete" ? "status-completed" :
+                                   displayStatus === "Delayed" ? "status-delayed" :
+                                   displayStatus === "Not Started" ? "status-not-started" : "status-in-progress";
+                const parentTask = tasks.find(t => t.id === task.parentId);
+                row.innerHTML = `
+                    <td>${task.project}</td>
+                    <td class="${hasSubtasks ? 'expandable' : ''} editable" onclick="editTaskField(${task.id}, 'task')">${task.task}</td>
+                    <td class="editable" onclick="editTaskField(${task.id}, 'status')"><span class="status ${statusClass}">${displayStatus}</span></td>
+                    <td class="editable" onclick="editTaskField(${task.id}, 'finishDate')">${task.finishDate}</td>
+                    <td class="editable" onclick="editTaskField(${task.id}, 'responsible')">${task.responsible.map(r => teamProfiles[r]?.name || r).join(', ')}</td>
+                    <td>${parentTask ? parentTask.task : ''}</td>
+                    <td class="actions">
+                        <button onclick="editTask(${task.id})">Edit</button>
+                        <button onclick="duplicateTask(${task.id})">Duplicate</button>
+                    </td>
+                `;
+                if (hasSubtasks) {
+                    row.querySelector('.expandable').onclick = (e) => {
+                        if (e.target.classList.contains('expandable')) {
+                            e.target.classList.toggle('expanded');
+                            const subtasks = tbody.querySelectorAll(`tr.subtask[data-parent-id="${task.id}"]`);
+                            subtasks.forEach(subtask => subtask.classList.toggle('expanded'));
+                        }
+                    };
+                }
+                row.setAttribute('data-parent-id', task.parentId || '');
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderGantt() {
+            const ganttTimeline = document.getElementById('ganttTimeline');
+            const ganttChart = document.getElementById('ganttChart');
+            const ganttStartDateInput = document.getElementById('ganttStartDate').value;
+            const ganttEndDateInput = document.getElementById('ganttEndDate').value;
+
+            let startDate, endDate;
+            if (ganttStartDateInput && ganttEndDateInput) {
+                startDate = parseDate(ganttStartDateInput);
+                endDate = parseDate(ganttEndDateInput);
+            } else {
+                const dates = tasks.flatMap(task => [parseDate(task.startDate), parseDate(task.finishDate)]);
+                startDate = new Date(Math.min(...dates));
+                endDate = new Date(Math.max(...dates));
+                startDate.setMonth(startDate.getMonth() - 1);
+                endDate.setMonth(endDate.getMonth() + 1);
+            }
+
+            const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+            const dayWidth = 30 * zoomFactor;
+            const totalWidth = totalDays * dayWidth;
+
+            ganttTimeline.style.width = `${totalWidth}px`;
+            ganttChart.style.width = `${totalWidth}px`;
+
+            // Render timeline (months, weeks, days)
+            let monthHTML = '';
+            let weekHTML = '';
+            let dayHTML = '';
+            let currentDate = new Date(startDate);
+            let currentMonth = currentDate.getMonth();
+            let monthDays = 0;
+            let weekDays = 0;
+            let weekNumber = 1;
+
+            while (currentDate <= endDate) {
+                const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+                const remainingDaysInMonth = daysInMonth - currentDate.getDate() + 1;
+                const daysToAdd = currentDate.getMonth() === endDate.getMonth() ? endDate.getDate() - currentDate.getDate() + 1 : remainingDaysInMonth;
+
+                if (currentDate.getMonth() !== currentMonth) {
+                    const monthWidth = monthDays * dayWidth;
+                    monthHTML += `<div class="gantt-month" style="width: ${monthWidth}px">${new Date(currentDate.getFullYear(), currentMonth).toLocaleString('default', { month: 'short', year: 'numeric' })}</div>`;
+                    monthDays = 0;
+                    currentMonth = currentDate.getMonth();
+                }
+
+                const daysInWeek = 7 - (currentDate.getDay() === 0 ? 7 : currentDate.getDay());
+                const weekDaysToAdd = Math.min(daysToAdd, daysInWeek);
+                if (weekDays + weekDaysToAdd >= 7 || currentDate.getDate() + daysToAdd > daysInMonth) {
+                    const weekWidth = weekDays * dayWidth;
+                    weekHTML += `<div class="gantt-week" style="width: ${weekWidth}px">Week ${weekNumber}</div>`;
+                    weekDays = 0;
+                    weekNumber++;
+                }
+
+                const dayWidthPx = dayWidth;
+                dayHTML += `<div class="gantt-day" style="width: ${dayWidthPx}px">${currentDate.getDate()}</div>`;
+                monthDays++;
+                weekDays += 1;
+
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            if (monthDays > 0) {
+                const monthWidth = monthDays * dayWidth;
+                monthHTML += `<div class="gantt-month" style="width: ${monthWidth}px">${new Date(currentDate.getFullYear(), currentMonth).toLocaleString('default', { month: 'short', year: 'numeric' })}</div>`;
+            }
+
+            if (weekDays > 0) {
+                const weekWidth = weekDays * dayWidth;
+                weekHTML += `<div class="gantt-week" style="width: ${weekWidth}px">Week ${weekNumber}</div>`;
+            }
+
+            ganttTimeline.innerHTML = `
+                <div style="display: flex">${monthHTML}</div>
+                <div style="display: flex">${weekHTML}</div>
+                <div style="display: flex">${dayHTML}</div>
+            `;
+
+            // Render tasks in Gantt chart
+            ganttChart.innerHTML = '';
+            const today = new Date();
+            const daysFromStartToToday = (today - startDate) / (1000 * 60 * 60 * 24);
+            if (daysFromStartToToday >= 0 && daysFromStartToToday <= totalDays) {
+                const todayPosition = daysFromStartToToday * dayWidth;
+                ganttChart.innerHTML += `<div class="today-line" style="left: ${todayPosition}px;"></div>`;
+            }
+
+            const sortedTasks = sortTasksByProjectAndParent(tasks);
+            const projectGroups = {};
+            sortedTasks.forEach(task => {
+                if (!projectGroups[task.project]) {
+                    projectGroups[task.project] = [];
+                }
+                projectGroups[task.project].push(task);
+            });
+
+            let yPosition = 0;
+            projectOrder.forEach(project => {
+                if (projectGroups[project]) {
+                    projectGroups[project].forEach(task => {
+                        const taskStart = parseDate(task.startDate);
+                        const taskEnd = parseDate(task.finishDate);
+                        if (taskEnd < startDate || taskStart > endDate) return;
+
+                        const daysFromStart = (taskStart - startDate) / (1000 * 60 * 60 * 24);
+                        const durationDays = (taskEnd - taskStart) / (1000 * 60 * 60 * 24) + 1;
+                        const left = daysFromStart * dayWidth;
+                        const width = durationDays * dayWidth;
+
+                        const displayStatus = getTaskStatus(task);
+                        const backgroundColor = displayStatus === "Complete" ? "#28a745" :
+                                               displayStatus === "Delayed" ? "#dc3545" :
+                                               displayStatus === "Not Started" ? "#e9ecef" : "#007bff";
+
+                        const taskElement = document.createElement('div');
+                        taskElement.className = 'gantt-task';
+                        taskElement.style.left = `${left}px`;
+                        taskElement.style.top = `${yPosition * 30 + 10}px`;
+                        taskElement.style.width = `${width}px`;
+                        taskElement.style.backgroundColor = backgroundColor;
+                        taskElement.innerText = task.task;
+                        taskElement.setAttribute('data-task-id', task.id);
+                        
+                        // Add resize handles
+                        const leftHandle = document.createElement('div');
+                        leftHandle.className = 'resize-handle-left';
+                        taskElement.appendChild(leftHandle);
+                        
+                        const rightHandle = document.createElement('div');
+                        rightHandle.className = 'resize-handle-right';
+                        taskElement.appendChild(rightHandle);
+                        
+                        // Variables for dragging and resizing
+                        let isDragging = false;
+                        let isResizingLeft = false;
+                        let isResizingRight = false;
+                        let startX, startLeft, startWidth;
+                        
+                        // Mouse down event for dragging the entire task
+                        taskElement.addEventListener('mousedown', (e) => {
+                            if (e.target === leftHandle || e.target === rightHandle) return;
+                            
+                            isDragging = true;
+                            startX = e.clientX;
+                            startLeft = parseFloat(taskElement.style.left);
+                            taskElement.classList.add('dragging');
+                            e.preventDefault();
+                        });
+                        
+                        // Mouse down event for left resize handle
+                        leftHandle.addEventListener('mousedown', (e) => {
+                            isResizingLeft = true;
+                            startX = e.clientX;
+                            startLeft = parseFloat(taskElement.style.left);
+                            startWidth = parseFloat(taskElement.style.width);
+                            taskElement.classList.add('resizing');
+                            e.preventDefault();
+                            e.stopPropagation();
+                        });
+                        
+                        // Mouse down event for right resize handle
+                        rightHandle.addEventListener('mousedown', (e) => {
+                            isResizingRight = true;
+                            startX = e.clientX;
+                            startWidth = parseFloat(taskElement.style.width);
+                            taskElement.classList.add('resizing');
+                            e.preventDefault();
+                            e.stopPropagation();
+                        });
+                        
+                        // Mouse move event for dragging and resizing
+                        document.addEventListener('mousemove', (e) => {
+                            if (isDragging) {
+                                const deltaX = e.clientX - startX;
+                                const newLeft = startLeft + deltaX;
+                                taskElement.style.left = `${newLeft}px`;
+                            } 
+                            else if (isResizingLeft) {
+                                const deltaX = e.clientX - startX;
+                                const newLeft = Math.min(startLeft + deltaX, startLeft + startWidth - 30); // Minimum width of 30px
+                                const newWidth = startWidth - (newLeft - startLeft);
+                                
+                                if (newWidth >= 30) { // Ensure minimum width
+                                    taskElement.style.left = `${newLeft}px`;
+                                    taskElement.style.width = `${newWidth}px`;
+                                }
+                            } 
+                            else if (isResizingRight) {
+                                const deltaX = e.clientX - startX;
+                                const newWidth = Math.max(30, startWidth + deltaX); // Minimum width of 30px
+                                taskElement.style.width = `${newWidth}px`;
+                            }
+                        });
+                        
+                        // Mouse up event for dragging and resizing
+                        document.addEventListener('mouseup', (e) => {
+                            if (isDragging || isResizingLeft || isResizingRight) {
+                                const task = tasks.find(t => t.id === parseInt(taskElement.getAttribute('data-task-id')));
+                                const newLeft = parseFloat(taskElement.style.left);
+                                const newWidth = parseFloat(taskElement.style.width);
+                                
+                                // Calculate new dates based on position and width
+                                const newDaysFromStart = newLeft / dayWidth;
+                                const newDuration = newWidth / dayWidth;
+                                
+                                const newStartDate = new Date(startDate);
+                                newStartDate.setDate(newStartDate.getDate() + Math.round(newDaysFromStart));
+                                
+                                const newEndDate = new Date(newStartDate);
+                                newEndDate.setDate(newEndDate.getDate() + Math.round(newDuration) - 1);
+                                
+                                // Update task dates
+                                task.startDate = formatDate(newStartDate);
+                                task.finishDate = formatDate(newEndDate);
+                                
+                                // Save changes
+                                saveTasks();
+                                
+                                // Reset flags and classes
+                                isDragging = false;
+                                isResizingLeft = false;
+                                isResizingRight = false;
+                                taskElement.classList.remove('dragging', 'resizing');
+                            }
+                        });
+                        
+                        // Click event for editing task
+                        taskElement.addEventListener('click', (e) => {
+                            if (e.target !== leftHandle && e.target !== rightHandle) {
+                                editTask(task.id);
+                            }
+                        });
+
+                        ganttChart.appendChild(taskElement);
+                        yPosition++;
+                    });
+                }
+            });
+
+            ganttChart.style.height = `${yPosition * 30 + 20}px`;
+        }
+
+        function zoomGantt(factor) {
+            zoomFactor *= factor;
+            renderGantt();
+        }
+
+        // Function to create a status dropdown for Team View
+        function createTeamViewStatusDropdown(currentStatus, taskId) {
+            const statuses = ["Not Started", "In Progress", "Complete"];
+            const dropdown = document.createElement('select');
+            dropdown.className = 'status-dropdown';
+            dropdown.setAttribute('data-task-id', taskId);
+            
+            statuses.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status;
+                option.textContent = status;
+                if (status === currentStatus) {
+                    option.selected = true;
+                }
+                dropdown.appendChild(option);
+            });
+            
+            dropdown.onchange = function() {
+                const taskId = this.getAttribute('data-task-id');
+                const newStatus = this.value;
+                const taskIndex = tasks.findIndex(t => t.id === parseInt(taskId));
+                if (taskIndex !== -1) {
+                    tasks[taskIndex].status = newStatus;
+                    saveTasks();
+                    renderTeam();
+                }
+            };
+            
+            return dropdown;
+        }
+
+        // Function to create a date picker for Team View
+        function createTeamViewDatePicker(currentDate, taskId) {
+            const datePicker = document.createElement('input');
+            datePicker.type = 'date';
+            datePicker.className = 'date-picker';
+            datePicker.setAttribute('data-task-id', taskId);
+            
+            // Convert DD/MM/YYYY to YYYY-MM-DD for the date input
+            if (currentDate) {
+                const [day, month, year] = currentDate.split('/');
+                datePicker.value = `${year}-${month}-${day}`;
+            }
+            
+            datePicker.onchange = function() {
+                const taskId = this.getAttribute('data-task-id');
+                const newDate = this.value;
+                const taskIndex = tasks.findIndex(t => t.id === parseInt(taskId));
+                
+                if (taskIndex !== -1 && newDate) {
+                    // Convert YYYY-MM-DD to DD/MM/YYYY
+                    const [year, month, day] = newDate.split('-');
+                    tasks[taskIndex].finishDate = `${day}/${month}/${year}`;
+                    saveTasks();
+                    renderTeam();
+                }
+            };
+            
+            return datePicker;
+        }
+
+        // Function to make task name editable
+        function createTeamViewTaskNameEditor(currentName, taskId) {
+            const taskNameEditor = document.createElement('div');
+            taskNameEditor.className = 'editable-task-name';
+            taskNameEditor.textContent = currentName;
+            taskNameEditor.setAttribute('data-task-id', taskId);
+            
+            taskNameEditor.onclick = function() {
+                const taskId = this.getAttribute('data-task-id');
+                const currentText = this.textContent;
+                
+                // Replace with input field
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentText;
+                input.className = 'task-name-input';
+                
+                // Clear the div and add the input
+                this.textContent = '';
+                this.appendChild(input);
+                input.focus();
+                
+                // Handle input blur (when user clicks away)
+                input.onblur = function() {
+                    const newName = this.value.trim();
+                    if (newName && newName !== currentText) {
+                        const taskIndex = tasks.findIndex(t => t.id === parseInt(taskId));
+                        if (taskIndex !== -1) {
+                            tasks[taskIndex].task = newName;
+                            saveTasks();
+                            renderTeam();
+                        }
+                    } else {
+                        // If empty or unchanged, revert to original
+                        taskNameEditor.textContent = currentText;
+                    }
+                };
+                
+                // Handle Enter key
+                input.onkeydown = function(e) {
+                    if (e.key === 'Enter') {
+                        this.blur();
+                    }
+                };
+            };
+            
+            return taskNameEditor;
+        }
+
+        function renderTeam() {
+            const teamContainer = document.getElementById('teamMembers');
+            const resourceFilter = document.getElementById('teamResourceFilter').value;
+            teamContainer.innerHTML = '';
+
+            const filteredResources = resourceFilter ? { [resourceFilter]: teamProfiles[resourceFilter] } : teamProfiles;
+
+            Object.entries(filteredResources).forEach(([id, profile]) => {
+                const memberTasks = tasks.filter(task => task.responsible.includes(id));
+                const completedTasks = memberTasks.filter(task => task.status === "Complete").length;
+                const totalTasks = memberTasks.length;
+                const progress = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+                const memberDiv = document.createElement('div');
+                memberDiv.className = 'team-member';
+                memberDiv.innerHTML = `
+                    <div class="profile-card">
+                        <img src="https://via.placeholder.com/50" alt="${profile.name}">
+                        <div class="profile-details">
+                            <h3>${profile.name}</h3>
+                            <p>${profile.role} | ${profile.email}</p>
+                            <p>Progress: ${progress}% (${completedTasks}/${totalTasks} tasks completed)</p>
+                        </div>
+                    </div>
+                    <div class="assigned-tasks">
+                        <h4>Assigned Tasks</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Task</th>
+                                    <th>Status</th>
+                                    <th>Due Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${memberTasks.map(task => {
+                                    const displayStatus = getTaskStatus(task);
+                                    const statusClass = displayStatus === "Complete" ? "status-completed" :
+                                                       displayStatus === "Delayed" ? "status-delayed" :
+                                                       displayStatus === "Not Started" ? "status-not-started" : "status-in-progress";
+                                    return `
+                                        <tr data-task-id="${task.id}">
+                                            <td>${task.project}</td>
+                                            <td class="task-name-cell" data-task-id="${task.id}"></td>
+                                            <td class="status-cell" data-task-id="${task.id}"></td>
+                                            <td class="date-cell" data-task-id="${task.id}"></td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                teamContainer.appendChild(memberDiv);
+                
+                // Add editable elements to task rows
+                const rows = memberDiv.querySelectorAll('tr[data-task-id]');
+                rows.forEach(row => {
+                    const taskId = row.getAttribute('data-task-id');
+                    const task = tasks.find(t => t.id === parseInt(taskId));
+                    
+                    if (task) {
+                        // Add task name editor
+                        const taskNameCell = row.querySelector(`.task-name-cell[data-task-id="${taskId}"]`);
+                        taskNameCell.appendChild(createTeamViewTaskNameEditor(task.task, taskId));
+                        
+                        // Add status dropdown
+                        const statusCell = row.querySelector(`.status-cell[data-task-id="${taskId}"]`);
+                        statusCell.appendChild(createTeamViewStatusDropdown(task.status, taskId));
+                        
+                        // Add date picker
+                        const dateCell = row.querySelector(`.date-cell[data-task-id="${taskId}"]`);
+                        dateCell.appendChild(createTeamViewDatePicker(task.finishDate, taskId));
+                    }
+                });
+            });
+        }
+
+        function renderResources() {
+            const resourcesTable = document.getElementById('resourcesTable');
+            resourcesTable.innerHTML = '';
+
+            Object.entries(teamProfiles).forEach(([id, resource]) => {
+                const row = document.createElement('tr');
+                row.className = 'resource-row';
+                row.innerHTML = `
+                    <td>${id}</td>
+                    <td>${resource.name}</td>
+                    <td>${resource.role}</td>
+                    <td>${resource.email}</td>
+                    <td class="actions">
+                        <button onclick="editResource('${id}')">Edit</button>
+                        <button onclick="deleteResource('${id}')">Delete</button>
+                    </td>
+                `;
+                resourcesTable.appendChild(row);
+            });
+        }
+
+        function addTask() {
+            const modal = document.getElementById('taskModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const taskForm = document.getElementById('taskForm');
+            const parentTaskSelect = document.getElementById('parentTask');
+
+            modalTitle.innerText = 'Add Task';
+            taskForm.reset();
+            parentTaskSelect.innerHTML = '<option value="">None</option>' + tasks.map(task => `<option value="${task.id}">${task.task}</option>`).join('');
+            modal.style.display = 'flex';
+
+            taskForm.onsubmit = (e) => {
+                e.preventDefault();
+                const newTask = {
+                    id: tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
+                    project: document.getElementById('projectTopic').value,
+                    task: document.getElementById('taskName').value,
+                    responsible: Array.from(document.getElementById('responsible').selectedOptions).map(option => option.value),
+                    startDate: document.getElementById('startDate').value,
+                    finishDate: document.getElementById('finishDate').value || document.getElementById('startDate').value,
+                    status: document.getElementById('status').value,
+                    parentId: document.getElementById('parentTask').value ? parseInt(document.getElementById('parentTask').value) : null
+                };
+                tasks.push(newTask);
+                saveTasks();
+                closeModal();
+            };
+        }
+
+        function editTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const modal = document.getElementById('taskModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const taskForm = document.getElementById('taskForm');
+            const parentTaskSelect = document.getElementById('parentTask');
+
+            modalTitle.innerText = 'Edit Task';
+            document.getElementById('projectTopic').value = task.project;
+            document.getElementById('taskName').value = task.task;
+            const responsibleSelect = document.getElementById('responsible');
+            Array.from(responsibleSelect.options).forEach(option => {
+                option.selected = task.responsible.includes(option.value);
+            });
+            document.getElementById('startDate').value = task.startDate;
+            document.getElementById('finishDate').value = task.finishDate;
+            document.getElementById('status').value = task.status;
+            parentTaskSelect.innerHTML = '<option value="">None</option>' + tasks
+                .filter(t => t.id !== taskId)
+                .map(t => `<option value="${t.id}" ${t.id === task.parentId ? 'selected' : ''}>${t.task}</option>`).join('');
+            modal.style.display = 'flex';
+
+            taskForm.onsubmit = (e) => {
+                e.preventDefault();
+                task.project = document.getElementById('projectTopic').value;
+                task.task = document.getElementById('taskName').value;
+                task.responsible = Array.from(document.getElementById('responsible').selectedOptions).map(option => option.value);
+                task.startDate = document.getElementById('startDate').value;
+                task.finishDate = document.getElementById('finishDate').value || document.getElementById('startDate').value;
+                task.status = document.getElementById('status').value;
+                task.parentId = document.getElementById('parentTask').value ? parseInt(document.getElementById('parentTask').value) : null;
+                saveTasks();
+                closeModal();
+            };
+        }
+
+        function editTaskField(taskId, field) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            // Create a modal for editing
+            const editModal = document.createElement('div');
+            editModal.className = 'edit-field-modal';
+            editModal.style.position = 'fixed';
+            editModal.style.top = '50%';
+            editModal.style.left = '50%';
+            editModal.style.transform = 'translate(-50%, -50%)';
+            editModal.style.backgroundColor = 'white';
+            editModal.style.padding = '20px';
+            editModal.style.borderRadius = '5px';
+            editModal.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+            editModal.style.zIndex = '1000';
+            
+            // Create modal content based on field type
+            let modalContent = '';
+            
+            if (field === 'responsible') {
+                // Create multi-select dropdown for resources
+                const validResources = Object.keys(teamProfiles);
+                modalContent = `
+                    <h3>Edit ${field}</h3>
+                    <select multiple class="multi-select" id="edit-${field}" style="width: 100%; min-height: 100px;">
+                        ${validResources.map(id => 
+                            `<option value="${id}" ${task.responsible.includes(id) ? 'selected' : ''}>${teamProfiles[id].name}</option>`
+                        ).join('')}
+                    </select>
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button id="save-edit">Save</button>
+                        <button id="cancel-edit">Cancel</button>
+                    </div>
+                `;
+            } else if (field === 'status') {
+                // Create dropdown for status
+                const validStatuses = ["Not Started", "Started", "25% Complete", "50% Complete", "75% Complete", "Complete"];
+                modalContent = `
+                    <h3>Edit ${field}</h3>
+                    <select id="edit-${field}" style="width: 100%;">
+                        ${validStatuses.map(status => 
+                            `<option value="${status}" ${task.status === status ? 'selected' : ''}>${status}</option>`
+                        ).join('')}
+                    </select>
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button id="save-edit">Save</button>
+                        <button id="cancel-edit">Cancel</button>
+                    </div>
+                `;
+            } else if (field === 'startDate' || field === 'finishDate') {
+                // Create date picker for dates
+                modalContent = `
+                    <h3>Edit ${field}</h3>
+                    <input type="date" id="edit-${field}" value="${formatDateForInput(task[field])}" style="width: 100%;">
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button id="save-edit">Save</button>
+                        <button id="cancel-edit">Cancel</button>
+                    </div>
+                `;
+            } else {
+                // For other fields, use a simple text input
+                modalContent = `
+                    <h3>Edit ${field}</h3>
+                    <input type="text" id="edit-${field}" value="${task[field]}" style="width: 100%;">
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button id="save-edit">Save</button>
+                        <button id="cancel-edit">Cancel</button>
+                    </div>
+                `;
+            }
+            
+            editModal.innerHTML = modalContent;
+            document.body.appendChild(editModal);
+            
+            // Add event listeners for save and cancel buttons
+            document.getElementById('save-edit').addEventListener('click', function() {
+                if (field === 'responsible') {
+                    const select = document.getElementById(`edit-${field}`);
+                    const selectedOptions = Array.from(select.selectedOptions).map(option => option.value);
+                    if (selectedOptions.length) {
+                        task[field] = selectedOptions;
+                    } else {
+                        alert('Please select at least one resource.');
+                        return;
+                    }
+                } else if (field === 'status') {
+                    task[field] = document.getElementById(`edit-${field}`).value;
+                } else if (field === 'startDate' || field === 'finishDate') {
+                    const dateValue = document.getElementById(`edit-${field}`).value;
+                    if (dateValue) {
+                        // Convert from YYYY-MM-DD to DD/MM/YYYY
+                        const [year, month, day] = dateValue.split('-');
+                        task[field] = `${day}/${month}/${year}`;
+                    } else {
+                        alert('Please select a date.');
+                        return;
+                    }
+                } else {
+                    task[field] = document.getElementById(`edit-${field}`).value;
+                }
+                
+                saveTasks();
+                document.body.removeChild(editModal);
+            });
+            
+            document.getElementById('cancel-edit').addEventListener('click', function() {
+                document.body.removeChild(editModal);
+            });
+        }
+        
+        // Helper function to format date from DD/MM/YYYY to YYYY-MM-DD for input[type="date"]
+        function formatDateForInput(dateStr) {
+            const [day, month, year] = dateStr.split('/');
+            return `${year}-${month}-${day}`;
+        }
+
+        function duplicateTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const newTask = { ...task, id: Math.max(...tasks.map(t => t.id)) + 1 };
+            tasks.push(newTask);
+            saveTasks();
+        }
+
+        function addProject() {
+            const modal = document.getElementById('projectModal');
+            const modalTitle = document.getElementById('projectModalTitle');
+            const projectForm = document.getElementById('projectForm');
+
+            modalTitle.innerText = 'Add Project';
+            projectForm.reset();
+            modal.style.display = 'flex';
+
+            projectForm.onsubmit = (e) => {
+                e.preventDefault();
+                const projectName = document.getElementById('projectName').value;
+                if (!tasks.some(task => task.project === projectName)) {
+                    tasks.push({
+                        id: Math.max(...tasks.map(t => t.id)) + 1,
+                        project: projectName,
+                        task: `Initial Task for ${projectName}`,
+                        responsible: [Object.keys(teamProfiles)[0]],
+                        startDate: formatDate(new Date()),
+                        finishDate: formatDate(new Date()),
+                        status: "Not Started",
+                        parentId: null
+                    });
+                    projectOrder.push(projectName);
+                    saveTasks();
+                    saveProjectOrder();
+                }
+                closeProjectModal();
+            };
+        }
+
+        function editProject(projectName) {
+            const modal = document.getElementById('projectModal');
+            const modalTitle = document.getElementById('projectModalTitle');
+            const projectForm = document.getElementById('projectForm');
+
+            modalTitle.innerText = 'Edit Project';
+            document.getElementById('projectName').value = projectName;
+            modal.style.display = 'flex';
+
+            projectForm.onsubmit = (e) => {
+                e.preventDefault();
+                const newProjectName = document.getElementById('projectName').value;
+                tasks.forEach(task => {
+                    if (task.project === projectName) {
+                        task.project = newProjectName;
+                    }
+                });
+                const index = projectOrder.indexOf(projectName);
+                if (index !== -1) {
+                    projectOrder[index] = newProjectName;
+                }
+                saveTasks();
+                saveProjectOrder();
+                closeProjectModal();
+            };
+        }
+
+        function duplicateProject(projectName) {
+            const projectTasks = tasks.filter(task => task.project === projectName);
+            const maxId = Math.max(...tasks.map(t => t.id));
+            const newProjectName = `${projectName} (Copy)`;
+            const idMap = {};
+
+            projectTasks.forEach((task, index) => {
+                const newId = maxId + index + 1;
+                idMap[task.id] = newId;
+                const newTask = { ...task, id: newId, project: newProjectName };
+                if (newTask.parentId) {
+                    newTask.parentId = idMap[newTask.parentId] || newTask.parentId;
+                }
+                tasks.push(newTask);
+            });
+            projectOrder.push(newProjectName);
+            saveTasks();
+            saveProjectOrder();
+        }
+
+        function addResource() {
+            const modal = document.getElementById('resourceModal');
+            const modalTitle = document.getElementById('resourceModalTitle');
+            const resourceForm = document.getElementById('resourceForm');
+
+            modalTitle.innerText = 'Add Resource';
+            resourceForm.reset();
+            modal.style.display = 'flex';
+
+            resourceForm.onsubmit = (e) => {
+                e.preventDefault();
+                const id = document.getElementById('resourceId').value;
+                if (teamProfiles[id]) {
+                    alert('Resource ID already exists. Please use a unique ID.');
+                    return;
+                }
+                teamProfiles[id] = {
+                    name: document.getElementById('resourceName').value,
+                    role: document.getElementById('resourceRole').value,
+                    email: document.getElementById('resourceEmail').value
+                };
+                saveResources();
+                closeResourceModal();
+            };
+        }
+
+        function editResource(id) {
+            const resource = teamProfiles[id];
+            if (!resource) return;
+
+            const modal = document.getElementById('resourceModal');
+            const modalTitle = document.getElementById('resourceModalTitle');
+            const resourceForm = document.getElementById('resourceForm');
+
+            modalTitle.innerText = 'Edit Resource';
+            document.getElementById('resourceId').value = id;
+            document.getElementById('resourceId').disabled = true;
+            document.getElementById('resourceName').value = resource.name;
+            document.getElementById('resourceRole').value = resource.role;
+            document.getElementById('resourceEmail').value = resource.email;
+            modal.style.display = 'flex';
+
+            resourceForm.onsubmit = (e) => {
+                e.preventDefault();
+                teamProfiles[id] = {
+                    name: document.getElementById('resourceName').value,
+                    role: document.getElementById('resourceRole').value,
+                    email: document.getElementById('resourceEmail').value
+                };
+                saveResources();
+                closeResourceModal();
+            };
+        }
+
+        function deleteResource(id) {
+            if (confirm(`Are you sure you want to delete resource ${teamProfiles[id].name}?`)) {
+                delete teamProfiles[id];
+                tasks.forEach(task => {
+                    task.responsible = task.responsible.filter(r => r !== id);
+                });
+                saveResources();
+                saveTasks();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('taskModal').style.display = 'none';
+        }
+
+        function closeProjectModal() {
+            document.getElementById('projectModal').style.display = 'none';
+        }
+
+        function closeResourceModal() {
+            document.getElementById('resourceModal').style.display = 'none';
+            document.getElementById('resourceId').disabled = false;
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTasks();
+            initializeResources();
+
+            const sidebarItems = document.querySelectorAll('.sidebar ul li');
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    sidebarItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    const tab = item.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(tab).classList.add('active');
+
+                    if (tab === 'dashboard') renderDashboard();
+                    if (tab === 'projects') renderProjects();
+                    if (tab === 'tasks') renderTasks();
+                    if (tab === 'gantt') renderGantt();
+                    if (tab === 'team') renderTeam();
+                    if (tab === 'resources') renderResources();
+                });
+            });
+
+            renderDashboard();
+            renderProjects();
+            renderTasks();
+            renderGantt();
+            renderTeam();
+            renderResources();
+        });
+    </script>
+</body>
+</html>
+
